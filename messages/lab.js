@@ -15,6 +15,7 @@ function parse() {
 					console.log(Object.keys(parsedObjects[count]));
 					elem.innerHTML += "<p>" + parsedObjects[count]["username"] + ": " + parsedObjects[count]["content"] + "</p>";
 			}
+		}
 			else {
 				console.log("In progress...");
 			}

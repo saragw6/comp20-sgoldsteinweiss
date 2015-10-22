@@ -1,1 +1,8 @@
-/* Your CSS here... */
+#messages {
+	font-size: 14px;
+	background-color: LightBlue;
+}
+
+.username {
+	font-weight: bold;
+}

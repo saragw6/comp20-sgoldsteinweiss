@@ -12,7 +12,7 @@ function parse() {
             elem = document.getElementById("messages");
             for (count = 0; count < parsedObjects.length; count++) {
                 console.log(Object.keys(parsedObjects[count]));
-                elem.innerHTML += "<p><span = username>" + parsedObjects[count]["username"] + ": </span>" + parsedObjects[count]["content"] + "</p>";
+                elem.innerHTML += "<p>" + parsedObjects[count]["username"] + ": " + parsedObjects[count]["content"] + "</p>";
         }
     }
         else {

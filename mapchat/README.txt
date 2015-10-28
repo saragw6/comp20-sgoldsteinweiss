@@ -8,7 +8,7 @@ Successes and Faliures
 I completed the following aspects successfully:
 •used a file named index.html in a folder named mapchat
 •used a CSS file
-•
+•used navigator.geolocation to retrieve geolocation info
 •
 •
 •

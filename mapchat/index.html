@@ -19,9 +19,16 @@
 					navigator.geolocation.getCurrentPosition(function(position) {
 							myLat = position.coords.latitude;
 							myLng = position.coords.longitude;
-							/*locations = sendLocation(TomDapper, myLat, myLng, "Hi");*/
-							//insert code sending coords to catabase
-							alert("Your location is" + myLat + ", " + myLng + ".");
+							alert("Your location is (" + myLat + ", " + myLng + ").");
+
+							var http = new XMLHttpRequest();
+							http.open("POST", "https://secret-about-box.herokuapp.com/sendLocation", true)
+							http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+							http.onreadystatechange = function() {if(http.readyState == 4 && http.status == 200) {
+								alert(http.responseText);
+							}
+							}
+							http.send("login=TomDapper&lat=myLat&lng=myLng&message=Hi")
 						});
 				}
 				else {

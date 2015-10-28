@@ -14,21 +14,21 @@
 	    		zoom: 8
 	 		});
 
-			//Getting (& Sending?) Location
+			//Getting & Sending Location
 			if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
 					navigator.geolocation.getCurrentPosition(function(position) {
 							myLat = position.coords.latitude;
 							myLng = position.coords.longitude;
-							alert("Your location is (" + myLat + ", " + myLng + ").");
+							console.log("Your location is (" + myLat + ", " + myLng + ").");
 
 							var http = new XMLHttpRequest();
-							http.open("POST", "https://secret-about-box.herokuapp.com/sendLocation", true)
+							http.open("POST", "https://secret-about-box.herokuapp.com/sendLocation", true);
 							http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 							http.onreadystatechange = function() {if(http.readyState == 4 && http.status == 200) {
-								alert(http.responseText);
+								console.log(http.responseText);
 							}
-							}
-							http.send("login=TomDapper&lat=myLat&lng=myLng&message=Hi")
+							};
+							http.send("login=TomDapper&lat=" + myLat + "&lng=" + myLng + "&message=Hello");
 						});
 				}
 				else {

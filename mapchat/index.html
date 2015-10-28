@@ -5,6 +5,7 @@
 		<meta name="viewport" content="initial-scale=1.0">
 		<meta charset="utf-8">
 		<script src="https://maps.google.com/maps/api/js?sensor=true"></script>
+		<!-- this might go here: <script src="https://secret-about-box.herokuapp.com/sendLocation"></script> -->
 		<link rel="stylesheet" href="style.css">
 		<script>
 			function init() {
@@ -12,6 +13,21 @@
 	    		center: {lat: -34.397, lng: 150.644},
 	    		zoom: 8
 	 		});
+
+			//Getting (& Sending?) Location
+			if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
+					navigator.geolocation.getCurrentPosition(function(position) {
+							myLat = position.coords.latitude;
+							myLng = position.coords.longitude;
+							/*locations = sendLocation(TomDapper, myLat, myLng, "Hi");*/
+							//insert code sending coords to catabase
+							alert("Your location is" + myLat + ", " + myLng + ".");
+						});
+				}
+				else {
+					alert("Geolocation is not supported by your web browser.  What a shame!");
+				}
+
 			}
 		</script>	
 	</head>

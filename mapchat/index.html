@@ -10,25 +10,38 @@
 		<script>
 			function init() {
 			var map = new google.maps.Map(document.getElementById('map_canvas'), {
-	    		center: {lat: -34.397, lng: 150.644},
-	    		zoom: 8
+	    		center: {lat: 42.4, lng: -71.1},
+	    		zoom: 12
 	 		});
 
-			//Getting & Sending Location
 			if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
 					navigator.geolocation.getCurrentPosition(function(position) {
+							//Getting user's location
 							myLat = position.coords.latitude;
 							myLng = position.coords.longitude;
-							console.log("Your location is (" + myLat + ", " + myLng + ").");
-
+							
+							//Sending user's location, parsing data
 							var http = new XMLHttpRequest();
 							http.open("POST", "https://secret-about-box.herokuapp.com/sendLocation", true);
 							http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 							http.onreadystatechange = function() {if(http.readyState == 4 && http.status == 200) {
-								console.log(http.responseText);
+								jsondata = http.responseText;
+								console.log(jsondata);
+								parsedObjects = JSON.parse(jsondata);
 							}
 							};
 							http.send("login=TomDapper&lat=" + myLat + "&lng=" + myLng + "&message=Hello");
+							
+							//setting markers
+							for (count = 0; count < parsedObjects.length; count++) {
+								var myMarker = new google.maps.Marker({
+									position: {lat: parsedObjects[count]["lat"], lng: parsedObjects[count]["lng"]},
+ 									map: map,
+ 									icon: pushpin.png,
+	 								title: parsedObjects[count]["login"] + ". " + "[distance]" + " miles away. " + parsedObjects[count]["message"] + "."
+								});
+								console.log("for function complete");
+							}
 						});
 				}
 				else {

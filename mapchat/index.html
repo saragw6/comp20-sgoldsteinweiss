@@ -27,21 +27,21 @@
 							http.onreadystatechange = function() {if(http.readyState == 4 && http.status == 200) {
 								jsondata = http.responseText;
 								console.log(jsondata);
-								parsedObjects = JSON.parse(jsondata);
-							}
-							};
-							http.send("login=TomDapper&lat=" + myLat + "&lng=" + myLng + "&message=Hello");
-							
-							//setting markers
-							for (count = 0; count < parsedObjects.length; count++) {
+								var parsedObjects = JSON.parse(jsondata);
+
+								//setting markers
+								for (count = 0; count < parsedObjects.length; count++) {
 								var myMarker = new google.maps.Marker({
 									position: {lat: parsedObjects[count]["lat"], lng: parsedObjects[count]["lng"]},
  									map: map,
- 									icon: pushpin.png,
+ 									icon: "pushpin.png",
 	 								title: parsedObjects[count]["login"] + ". " + "[distance]" + " miles away. " + parsedObjects[count]["message"] + "."
 								});
 								console.log("for function complete");
+								}
 							}
+							};
+							http.send("login=TomDapper&lat=" + myLat + "&lng=" + myLng + "&message=Hello");
 						});
 				}
 				else {

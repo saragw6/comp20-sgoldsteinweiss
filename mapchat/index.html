@@ -29,14 +29,12 @@
 			}//end of else()
 
 			function sendLocation() {
-				console.log("Your location is: (" + myLat + ", " + myLng + ").");
 				var http = new XMLHttpRequest();
 				http.open("POST", "https://secret-about-box.herokuapp.com/sendLocation", true);
 				http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 				http.send("login=TomDapper&lat=" + myLat + "&lng=" + myLng + "&message=Hello");
 				http.onreadystatechange = function() {if(http.readyState == 4 && http.status == 200) {
 					jsondata = http.responseText;
-					console.log(jsondata);
 					parsedObjects = JSON.parse(jsondata);
 					drawMarkers();
 					}//end of if(http.readyState)
@@ -45,22 +43,25 @@
 
 			function drawMarkers() {
 				for (count = 0; count < parsedObjects.length;) {
-					count = (markers.push(new google.maps.Marker({
-						position: {lat: parsedObjects[count]["lat"], lng: parsedObjects[count]["lng"]},
-							map: map,
-							title: parsedObjects[count]["login"] + ". " + dist(parsedObjects[count]["lat"], parsedObjects[count]["lng"]) + " miles away. " + parsedObjects[count]["message"] + "."
-						})));//end of marker initializer, push argument, console.log argument, end of console statement
-					setInfoWindow(markers[count-1]);
+						if (parsedObjects[count]["login"] == "TomDapper") {
+							count = (markers.push(new google.maps.Marker({
+								position: {lat: parsedObjects[count]["lat"], lng: parsedObjects[count]["lng"]},
+									map: map,
+									title: parsedObjects[count]["login"],
+									icon: "alien.png"
+								})));//end of marker initializer, count increaser
+						}//end of if
+						else {
+							count = (markers.push(new google.maps.Marker({
+							position: {lat: parsedObjects[count]["lat"], lng: parsedObjects[count]["lng"]},
+								map: map,
+								title: parsedObjects[count]["login"] + ". " + dist(parsedObjects[count]["lat"], parsedObjects[count]["lng"]) + " miles away. " + parsedObjects[count]["message"] + "."
+							})));//end of marker initializer, count increaser
+						}//end of else
+						setInfoWindow(markers[count-1]);
 				}//end of for
+				drawMyMarker();
 			}//end of drawMarkers
-
-			function setInfoWindow(marker) {
-				//Open info window on click	
-				google.maps.event.addListener(marker, 'click', function() {
-					infowindow.setContent(marker["title"]);
-					infowindow.open(map, marker);
-				});	
-			}//end of setInfoWindow()
 
 			function dist(lat, lng) {
 				// Converts from degrees to radians. (taken from http://cwestblog.com/2012/11/12/javascript-degree-and-radian-conversion/)
@@ -81,6 +82,19 @@
 
 				return (R * c);
 			}//end of dist()
+
+			function setInfoWindow(marker) {
+				//Open info window on click	
+				google.maps.event.addListener(marker, 'click', function() {
+					infowindow.setContent(marker["title"]);
+					infowindow.open(map, marker);
+				});	
+			}//end of setInfoWindow()
+
+			function drawMyMarker() {
+				//insert unique marker drawer
+			}//end of drawMyMarker
+
 	 	}//end of init()
 		</script>	
 	</head>

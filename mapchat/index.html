@@ -5,96 +5,83 @@
 		<meta name="viewport" content="initial-scale=1.0">
 		<meta charset="utf-8">
 		<script src="https://maps.google.com/maps/api/js?sensor=true"></script>
-		<!-- this might go here: <script src="https://secret-about-box.herokuapp.com/sendLocation"></script> -->
 		<link rel="stylesheet" href="style.css">
 		<script>
-			var infowindow = new google.maps.InfoWindow();
-			var markers = new Array();
 			function init() {
 			var map = new google.maps.Map(document.getElementById('map_canvas'), {
 	    		center: {lat: 42.4, lng: -71.1},
 	    		zoom: 12
-	 		});
+	 		});//end of google.maps.Map()
+	 		var myLat = 0;
+	 		var myLng = 0;
+	 		var markers = new Array();
+	 		var parsedObjects = new Array();
+	 		var infowindow = new google.maps.InfoWindow();
 
-			if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
-					navigator.geolocation.getCurrentPosition(function(position) {
-							//Getting user's location
-							myLat = position.coords.latitude;
-							myLng = position.coords.longitude;
-							
-							//Sending user's location, parsing data
-							var http = new XMLHttpRequest();
-							http.open("POST", "https://secret-about-box.herokuapp.com/sendLocation", true);
-							http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-							http.onreadystatechange = function() {if(http.readyState == 4 && http.status == 200) {
-								jsondata = http.responseText;
-								console.log(jsondata);
-								var parsedObjects = JSON.parse(jsondata);
+	 		if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
+					navigator.geolocation.getCurrentPosition(function (position) {
+						myLat = position.coords.latitude;
+						myLng = position.coords.longitude;
+						sendLocation();
+					});//end of navigator.geolocation.getCurrentPosition(position())
+			} else {
+				alert("Geolocation is not supported by your web browser. What a shame!");
+			}//end of else()
 
+			function sendLocation() {
+				console.log("Your location is: (" + myLat + ", " + myLng + ").");
+				var http = new XMLHttpRequest();
+				http.open("POST", "https://secret-about-box.herokuapp.com/sendLocation", true);
+				http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				http.send("login=TomDapper&lat=" + myLat + "&lng=" + myLng + "&message=Hello");
+				http.onreadystatechange = function() {if(http.readyState == 4 && http.status == 200) {
+					jsondata = http.responseText;
+					console.log(jsondata);
+					parsedObjects = JSON.parse(jsondata);
+					drawMarkers();
+					}//end of if(http.readyState)
+				};//end of function()
+			}//end of sendLocation()
 
-								function dist (lat, lng) {
-									// Converts from degrees to radians. (taken from http://cwestblog.com/2012/11/12/javascript-degree-and-radian-conversion/)
-									Math.radians = function(degrees) {
-									  return (degrees * Math.PI / 180);
-									};
-									 
-									// Converts from radians to degrees.
-									Math.degrees = function(radians) {
-									  return (radians * 180 / Math.PI);
-									};
+			function drawMarkers() {
+				for (count = 0; count < parsedObjects.length;) {
+					count = (markers.push(new google.maps.Marker({
+						position: {lat: parsedObjects[count]["lat"], lng: parsedObjects[count]["lng"]},
+							map: map,
+							title: parsedObjects[count]["login"] + ". " + dist(parsedObjects[count]["lat"], parsedObjects[count]["lng"]) + " miles away. " + parsedObjects[count]["message"] + "."
+						})));//end of marker initializer, push argument, console.log argument, end of console statement
+					setInfoWindow(markers[count-1]);
+				}//end of for
+			}//end of drawMarkers
 
-									var R = 3959; // miles
-									var φ1 = Math.radians(myLat);
-									var φ2 = Math.radians(lat);
-									var Δφ = Math.radians((lat-myLat));
-									var Δλ = Math.radians((lng-myLng));
+			function setInfoWindow(marker) {
+				//Open info window on click	
+				google.maps.event.addListener(marker, 'click', function() {
+					infowindow.setContent(marker["title"]);
+					infowindow.open(map, marker);
+				});	
+			}//end of setInfoWindow()
 
-									var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-									        Math.cos(φ1) * Math.cos(φ2) *
-									        Math.sin(Δλ/2) * Math.sin(Δλ/2);
-									var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+			function dist(lat, lng) {
+				// Converts from degrees to radians. (taken from http://cwestblog.com/2012/11/12/javascript-degree-and-radian-conversion/)
+				Math.radians = function(degrees) {
+				  return (degrees * Math.PI / 180);
+				};//end of radians()
 
-									return (R * c);
+				var R = 3959; // miles
+				var φ1 = Math.radians(myLat);
+				var φ2 = Math.radians(lat);
+				var Δφ = Math.radians((lat-myLat));
+				var Δλ = Math.radians((lng-myLng));
 
-								}
+				var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+				        Math.cos(φ1) * Math.cos(φ2) *
+				        Math.sin(Δλ/2) * Math.sin(Δλ/2);
+				var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-								//setting markers
-								for (count = 1; count < parsedObjects.length; count++) {
-									markers[count] = new google.maps.Marker({
-										position: {lat: parsedObjects[count]["lat"], lng: parsedObjects[count]["lng"]},
-	 									map: map,
-		 								title: parsedObjects[count]["login"] + ". " + dist(parsedObjects[count]["lat"], parsedObjects[count]["lng"]) + " miles away. " + parsedObjects[count]["message"] + "."
-									});
-									//Open info window on click	 PROBLEM HERE
-									google.maps.event.addListener(markers, 'click', function() {
-										infowindow.setContent(markers.title);
-										infowindow.open(map, markers);
-								});		
-									}
-								console.log("for function complete");
-
-								//setting unique marker
-								markers[0] = new google.maps.Marker({
-									position: {lat: myLat, lng: myLng},
-									map: map,
-									icon: "pushpin.png",
-	 								title: "Here's you, TomDapper."
-								});
-								//Open info window on click	
-								google.maps.event.addListener(markers[0], 'click', function() {
-									infowindow.setContent(markers[0].title);
-									infowindow.open(map, markers[0]);
-								});	
-							}		
-						};
-							http.send("login=TomDapper&lat=" + myLat + "&lng=" + myLng + "&message=Hello");
-						});
-						}
-				else {
-					alert("Geolocation is not supported by your web browser.  What a shame!");
-				}
-
-			}
+				return (R * c);
+			}//end of dist()
+	 	}//end of init()
 		</script>	
 	</head>
 

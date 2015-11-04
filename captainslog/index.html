@@ -6,8 +6,14 @@
   <title>Captain's Log</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
   <script>
-      // Your work will be done here...
-      </script>
+		$("document").ready(function() {
+			$("input").change(function() {
+				alert(Date.now());
+				$("#log").prepend($("input").val());
+			});//end of input change function
+
+		});
+  </script>
 </head>
 
 <body>

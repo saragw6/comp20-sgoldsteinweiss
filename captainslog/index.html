@@ -8,17 +8,23 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
   <script>
 		$("document").ready(function() {
+			//loading old messages
+			output = "";
+			for (key in localStorage) {
+				output = localStorage[key] + output;
+			}//end of for
+			elem = document.getElementById("log");
+			elem.innerHTML = output;
+
 			$("input").change(function() {
-				$("#log").prepend(DateMe() + " " + $("input").val() + "<br>");
+				var myDate = new Date();
+				var timestamp = myDate.toString();
+
+				var entry = timestamp + " - " + $("input").val() + "<br>";
+				$("#log").prepend(entry);
+				localStorage.setItem(timestamp, entry);//store it in local storage
 			});//end of input change function
 		});//end of document ready
-
-		function DateMe() {
-			var jsDate = new Date();
-			 var readable = jsDate.toString();
-			 return(readable);
-
-		}//end of DateMe
   </script>
 </head>
 

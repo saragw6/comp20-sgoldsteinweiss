@@ -4,15 +4,21 @@
 
 <head>
   <title>Captain's Log</title>
+  <meta charset="utf-8">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
   <script>
 		$("document").ready(function() {
 			$("input").change(function() {
-				alert(Date.now());
-				$("#log").prepend($("input").val());
+				$("#log").prepend(DateMe() + " " + $("input").val() + "<br>");
 			});//end of input change function
+		});//end of document ready
 
-		});
+		function DateMe() {
+			var jsDate = new Date();
+			 var readable = jsDate.toString();
+			 return(readable);
+
+		}//end of DateMe
   </script>
 </head>
 

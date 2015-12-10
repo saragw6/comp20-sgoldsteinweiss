@@ -43,7 +43,7 @@
 
 <p>Mapchat and Quiet-Anchorage-5729 are a pair of web pages that work with a database of timestamped checkins sent by MapChat users including a login, longitude and latitude coordinates, and a message. Mapchat retrieves your current location and sends your current location with a message to a datastore. It then retrieves and displays the locations and messages of users who have sent their locations to the datastore. Quiet-Anchorage-5729 is a web application that maintains location check-ins (login, latitude, longitude, message) for a long period of time. It has a /sendLocation API through which users can send a checkin, a /latest.json API that returns the last known location of a login as a JSON string of a single object, and an index or home page which displays a list of the check-ins and messages for all logins sorted in descending order by timestamp.</p>
 
-<p>My job was to perform a security assesment and find vulnerabilities in the code which would allow hackers to break the web page or otherwise maliciously manipulate the code.</p>
+<p>My job was to perform a security assessment and find vulnerabilities in the code which would allow hackers to break the web page or otherwise maliciously manipulate the code.</p>
 
 <h2>Methodology</h2>
 
@@ -51,7 +51,7 @@ I first did a black-box test of the product, in an attempt to break the web page
 
 <h2>Abstract of Findings</h2>
 
-Unsurprisingly, a great deal of vulnerability came from the sendLocation aspect of Quiet-Anchorage-5729. The information sent in the POST request was incorporated into a database and later displayed in the home page. This left the product open to a number of attacks.
+Unsurprisingly, a great deal of vulnerability came from the sendLocation aspect of Quiet-Anchorage-5729. The information sent in the POST request was incorporated into a database and later displayed in the home page. This left the product open to a number of attacks, so the inputs need to be checked so that only permissible characters are allowed. Also, currently anyone is allowed to send a checkin. Some sort of credentials should be checked before a checkin is accepted from a given origin.
 
 <h2>Issues Found</h2>
 
@@ -60,7 +60,7 @@ Unsurprisingly, a great deal of vulnerability came from the sendLocation aspect 
 
 <ul>
 <li>Affects /latest.json API
-<ul><li><span class="mod">Moderate</span>: this flaw makes Quiet-Anchorage-5729 a significant security risk for other sites (such as MapChat) that expect it to handle data correctly, so it poses a big problem for the site's reputation with its clients. Luckily, the issue is easily-resolvable, and malicious checkins can be removed from the Mondo database.</li>
+<ul><li><span class="mod">Moderate</span>: this flaw makes Quiet-Anchorage-5729 a significant security risk for other sites (such as MapChat) that expect it to handle data correctly, so it poses a big problem for the site's reputation with its clients. Luckily, the issue is easily-resolvable, and malicious checkins can be removed from the Mongo database.</li>
 <li>Data sent to the sendLocation API isn't escaped, so it might include evil code in place of a longitude or latitude coordinate or a message.</li>
 <li>I found this by inserting an iframe into the latitude of my checkin like so: <code>curl --data "login=TomDapper&lat=&lt;iframe src='http://omfgdogs.com'&gt;&lt;/iframe&gt;&lng=10&message=lol" http://quiet-anchorage-5729.herokuapp.com/sendLocation</code> This sort of attack can affect a client who wants to use the information from /latest.json. For example, if they wanted to mark TomDapper's latest location on a map, this json object would make that impossible:</li>
 <table class="galleryTable">
@@ -81,57 +81,19 @@ Unsurprisingly, a great deal of vulnerability came from the sendLocation aspect 
 <li>This issue can be resolved as above, this instance of it merely makes it more dire.</li></ul></li>
 
 </ul></li></ul>
-<li><p><strong>Injection of additional database fields</strong></p>
+<li><p><strong>CORS: Cross Origin Resource Sharing</strong></p>
 
 <ul>
-<li>In POST API; affects database only</li>
-<li><span class="low">Low</span>: Arbitrary fields can be included in the database, but they are not currently returned by the GET API, so the only cost is in extra database space and lookups.</li>
-<li>By reviewing the code for the <code>/submit.json</code> route, I found that so long as the submission has the required fields, the entire submission body is added to the database by <code>collection.insert(request.body, ...</code>, including any extraneous fields. Because the <code>/highscores.json</code> code picks fields by name, these extra fields won't come back to a client, but they still take up space in the database.
-<table class="galleryTable">
-<tr><td><img src="img/extra-field-curl.png" alt="Inserting extra fields" title="Submitting extra fields via POST" /></td>
-<td><img src="img/extra-field-mongo.png" alt="Server log" title="All fields are stored in Mongo, including extras" /></td></tr>
-</table></li>
-<li><p>This can be resolved by building an object from only the desired fields:</p>
-
-<pre><code>var score = {
-    game_title : sanitize(req.body.game_title),
-    username : sanitize(req.body.username),
-    score : parseInt(req.body.score),
-    created_at : new Date()
-};
-collection.insert(score, function(err, result) { ... } );
-</code></pre></li>
-</ul></li>
-<li><p><strong>Arbitrary queries and JavaScript execution on Mongo</strong></p>
-
-<ul>
-<li>In user search; affects database execution</li>
-<li><span class="high">High</span>: Given that the <em>least</em> bad thing an attacker could do is perform any query possible on the database, this is serious. However, it is also easy to resolve.</li>
-<li>Reviewing the code for user search, I noticed that the user to look up is a GET parameter, but the Mongo search executes whatever that query is: <code>var cursor = collection.find(request.query)</code>, making anyone able to run any query against the database (and see the results in a pretty table view!) just by passing their query as a parameter.If the database contained private information, this would be a massive security flaw; as it is, all data is publicly available on the homepage. However, using MongoDB's <code>$where</code> query, attackers can execute (limited) JavaScript on the database. Modifying the data isn't possible, but a crude DoS attack can lock up the database with executing a meaningless query: <code>$where: "var a=0; while (true) { a++; }"</code> Simply entering this query into the browser URI bar, it is automatically encoded. When the database doesn't respond to the node server's next request, node aborts with an exception, taking down the site even after the malicious Mongo query times out.
-<table class="galleryTable">
-<tr>
-    <td><img src="img/mongod-top-pre-attack.png" alt="mongod CPU pre-attack" title="Normally, mongod demands few resources" /></td>
-    <td><img src="img/query-string.png" alt="Query string" title="Any query string is sent to Mongo, including this malicious one." /></td>
-    <td><img src="img/query-string-encoded.png" alt="Encoded query string" title="The browser automatically encodes the query for easy attacking" /></td>
-</tr><tr>
-    <td><img src="img/mongod-top-during.png" alt="mongod CPU during attack" title="The infinite loop makes mongod unresponsive..." /></td>
-    <td><img src="img/node-exception.png" alt="node exception" title="...which causes a Node exception when its database requests go unanswered..." /></td>
-    <td><img src="img/server-down.png" alt="Site is down" title="...bringing down the site until mongod and node are restarted." /></td>
-</tr>
-</table></li>
-<li><p>To resolve this, the mongo query should be built explicitly, not taken entirely from user input!</p>
-
-<pre><code>if (request.query.username) {
-    collection.find( { 'username' : sanitize(request.query.username) });
-    //Use data...
-}
-</code></pre></li>
-<li><strong>Sidenote</strong>: were this evaluation conducted a week ago, this would be a significantly greater security flaw. Until MongoDB 2.4, a <a href="http://blog.scrt.ch/2013/03/24/mongodb-0-day-ssji-to-rce/">0-day vulnerability</a> existed which allowed arbitrary database-side execution of native commands. Additionally, the scope of the <code>$where</code> query had read/write access to the full database, allowing queries like <code>{$where: "db.collection.dropDatabase();"}</code>. However, this was fixed just days ago with MongoDB 2.4.</li>
-</ul></li>
+<li>Affects POST and GET APIs</li>
+<li><span class="mod">Moderate</span>: Hackers could send data from any origin. Easily fixed, though.</li>
+<li>I found this by looking at the original source code. The GET and POST APIs needed to allow CORS in order to function. However, this web page used the '*' wildcard to allow all origins to complete requests, opening the page up to all sorts of attacks. This is a big gap in security, but has an easy enough fix.</li>
+<li>If we set some credentials instead of allowing requests from any origin, we can greatly increase security. This can be done by using a modifier like 'withCredentials' rather than the wildcard '*'.
+</li>
 </ul>
 
 <h2>Conclusion</h2>
 
+Several security vulnerabilities exist in this web page. However, they are fairly simple to fix with simply a few lines of code here or there. These small changes in code will make a big difference in the quality of the product. Though the solutions are small changes to the source code, the potential problems caused by these security breaches were enormous. 
 
 </body>
 </html>

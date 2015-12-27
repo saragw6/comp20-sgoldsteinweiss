@@ -47,7 +47,7 @@
 							count = (markers.push(new google.maps.Marker({
 								position: {lat: parsedObjects[count]["lat"], lng: parsedObjects[count]["lng"]},
 									map: map,
-									title: parsedObjects[count]["login"] + " (That's you!) said \x22" + parsedObjects[count]["message"] + "\x22 from " + dist(parsedObjects[count]["lat"], parsedObjects[count]["lng"]) + " miles away.",
+									title: "Here's you! You've succesfully logged in as TomDapper with the message  \x22Hello.\x22",
 									icon: "alien.png"
 								})));//end of marker initializer, count increaser
 						}//end of if
@@ -79,7 +79,9 @@
 				        Math.sin(Δλ/2) * Math.sin(Δλ/2);
 				var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-				return (R * c);
+				var rounded = (R * c).toFixed(4);
+
+				return (rounded);
 			}//end of dist()
 
 			function setInfoWindow(marker) {
